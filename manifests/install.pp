@@ -32,7 +32,7 @@ class consul::install {
         owner  => 'root',
         group  => 0, # 0 instead of root because OS X uses "wheel".
         mode   => '0555';
-      } -> exec { "curl $::consul::real_download_url | gunzip - > ${install_path}/consul-${consul::version}":
+      } -> exec { "curl $::consul::real_download_url | gunzip - > ${install_path}/consul-${consul::version}/consul":
         creates => "${install_path}/consul-${consul::version}/consul",
         path    => ['/usr/bin', '/bin',],
       } -> file { "${install_path}/consul-${consul::version}/consul":
@@ -59,7 +59,7 @@ class consul::install {
         file { "${install_path}/consul-${consul::version}_web_ui":
           ensure => directory,
         }
-        -> exec { "curl $::consul::real_ui_download_url | gunzip - > ${install_path}/consul-${consul::version}_web_ui"
+        -> exec { "curl $::consul::real_ui_download_url -o /tmp/consul_web.zip && unzip /tmp/consul_web.zip -d ${install_path}/consul-${consul::version}_web_ui":
           creates => $archive_creates,
           path    => ['/usr/bin', '/bin',],
         } -> file { $::consul::ui_dir:
