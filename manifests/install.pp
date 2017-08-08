@@ -25,7 +25,6 @@ class consul::install {
         $do_notify_service = undef
       }
 
-      include '::archive'
       file { [
         $install_path,
         "${install_path}/consul-${consul::version}"]:
@@ -33,17 +32,10 @@ class consul::install {
         owner  => 'root',
         group  => 0, # 0 instead of root because OS X uses "wheel".
         mode   => '0555';
-      }
-      -> archive { "${install_path}/consul-${consul::version}.${consul::download_extension}":
-        ensure       => present,
-        source       => $::consul::real_download_url,
-        proxy_server => $::consul::proxy_server,
-        extract      => true,
-        extract_path => "${install_path}/consul-${consul::version}",
-        creates      => "${install_path}/consul-${consul::version}/consul",
-      }
-      -> file {
-        "${install_path}/consul-${consul::version}/consul":
+      } -> exec { "curl $::consul::real_download_url | gunzip - > ${install_path}/consul-${consul::version}":
+        creates => "${install_path}/consul-${consul::version}/consul",
+        path    => ['/usr/bin', '/bin',],
+      } -> file { "${install_path}/consul-${consul::version}/consul":
           owner => 'root',
           group => 0, # 0 instead of root because OS X uses "wheel".
           mode  => '0555';
@@ -67,15 +59,10 @@ class consul::install {
         file { "${install_path}/consul-${consul::version}_web_ui":
           ensure => directory,
         }
-        -> archive { "${install_path}/consul_web_ui-${consul::version}.zip":
-          ensure       => present,
-          source       => $::consul::real_ui_download_url,
-          proxy_server => $::consul::proxy_server,
-          extract      => true,
-          extract_path => "${install_path}/consul-${consul::version}_web_ui",
-          creates      => $archive_creates,
-        }
-        ->file { $::consul::ui_dir:
+        -> exec { "curl $::consul::real_ui_download_url | gunzip - > ${install_path}/consul-${consul::version}_web_ui"
+          creates => $archive_creates,
+          path    => ['/usr/bin', '/bin',],
+        } -> file { $::consul::ui_dir:
           ensure => 'symlink',
           target => $ui_symlink_target,
         }
